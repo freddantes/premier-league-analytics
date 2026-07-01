@@ -1,0 +1,12 @@
+# Arquivos sensíveis
+.env
+
+# Pastas de dados
+data/
+!data/.keep
+
+# Ambientes virtuais e caches
+venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
