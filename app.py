@@ -8,13 +8,16 @@ st.set_page_config(page_title="Premier League Dashboard", layout="wide")
 st.title("⚽ Premier League Dashboard")
 st.markdown("---")
 
-# Caminho do arquivo parquet gerado pelo pipeline
-DATA_PATH = "data/gold/kpis.parquet"
-
 def load_data():
-    if os.path.exists(DATA_PATH):
-        return pd.read_parquet(DATA_PATH)
+    # Obtém o caminho absoluto baseado na localização do app.py
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "data", "gold", "kpis.parquet")
+    
+    if os.path.exists(file_path):
+        return pd.read_parquet(file_path)
     else:
+        # Exibe o caminho tentado para facilitar o debug caso ocorra erro
+        st.error(f"Arquivo não encontrado em: {file_path}")
         return None
 
 df = load_data()
@@ -40,14 +43,13 @@ if df is not None:
         
         # Linha de métricas rápidas
         c1, c2, c3 = st.columns(3)
-        c1.metric("Pontos", filtered_df['points'].values[0])
-        c2.metric("Jogos", filtered_df['playedGames'].values[0])
-        c3.metric("Saldo de Gols", filtered_df['goalDifference'].values[0])
+        c1.metric("Pontos", int(filtered_df['points'].values[0]))
+        c2.metric("Jogos", int(filtered_df['playedGames'].values[0]))
+        c3.metric("Saldo de Gols", int(filtered_df['goalDifference'].values[0]))
 
     st.markdown("---")
     st.subheader("Dados Detalhados")
     st.dataframe(filtered_df, use_container_width=True)
 
 else:
-    st.error("Erro: Arquivo de dados não encontrado.")
-    st.info("Certifique-se de que o pipeline rodou com sucesso para gerar o arquivo 'data/gold/kpis.parquet'.")
+    st.info("O pipeline está em execução ou os dados ainda não foram processados. Por favor, aguarde o carregamento.")
