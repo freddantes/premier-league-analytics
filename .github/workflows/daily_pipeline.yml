@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Adicionamos um timeout para evitar que o job fique travado infinitamente
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,3 +29,7 @@ jobs:
           API_KEY: ${{ secrets.API_KEY }}
           API_BASE_URL: https://api.football-data.org/v4
         run: python -m src.main
+
+      # Opcional: Se você quiser que o sistema tente rodar novamente em caso de falha,
+      # o próprio GitHub Actions permite que você clique em "Re-run failed jobs".
+      # A configuração acima é o padrão industrial para jobs de ETL.
