@@ -1,9 +1,12 @@
-import pandas as pd
-import requests
 import os
 from datetime import datetime
 from dotenv import load_dotenv
 from pathlib import Path
+
+# Importando suas funções dos outros arquivos
+from src.extract import get_league_data # Ajuste o import conforme a estrutura da sua pasta
+from src.transform import process_standings
+from src.load import save_data # (Você pode criar este arquivo baseado na lógica de salvamento)
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
@@ -22,55 +25,24 @@ LEAGUES = {
 
 def run_pipeline():
     api_key = os.getenv("API_KEY")
-    base_url = os.getenv("API_BASE_URL")
     today = datetime.now().strftime("%Y-%m-%d")
     
-    if not api_key:
-        raise ValueError("API_KEY não encontrada!")
-
-    # Cria pasta com a data de hoje para versionamento
-    target_dir = f"data/gold/{today}"
-    os.makedirs(target_dir, exist_ok=True)
-
     for name, code in LEAGUES.items():
-        print(f"Processando: {name} ({code})...")
-        endpoint = f"{base_url}/competitions/{code}/standings"
-        headers = {"X-Auth-Token": api_key}
-        
+        print(f"--- Processando: {name} ---")
         try:
-            response = requests.get(endpoint, headers=headers)
-            if response.status_code == 200:
-                data = response.json()
-                if 'standings' in data and data['standings']:
-                    all_groups = []
-                    for stage in data['standings']:
-                        if 'table' in stage:
-                            all_groups.append(pd.DataFrame(stage['table']))
-                    
-                    if all_groups:
-                        df = pd.concat(all_groups, ignore_index=True)
-                        
-                        if 'team' in df.columns:
-                            df_team = pd.json_normalize(df['team']).add_prefix('team_')
-                            df_final = pd.concat([df.drop(columns=['team']), df_team], axis=1)
-                        else:
-                            df_final = df
-                        
-                        # Cálculo de métricas
-                        df_final['goals_per_game'] = (df_final['goalsFor'] / df_final['playedGames']).fillna(0).round(2)
-                        df_final['points_pct'] = (df_final['points'] / (df_final['playedGames'] * 3)).fillna(0).round(2)
-                        
-                        # Salva arquivo versionado pela data
-                        df_final.to_parquet(f"{target_dir}/{code}_{today}.parquet")
-                        print(f"Sucesso: {name} salvo em {target_dir}")
-                    else:
-                        print(f"Aviso: Tabela vazia para {name}")
-                else:
-                    print(f"Aviso: Sem dados de classificação para {name}")
-            else:
-                print(f"Erro {response.status_code} em {name}")
+            # 1. EXTRACT
+            raw_data = get_league_data(code, api_key)
+            
+            # 2. TRANSFORM
+            df = process_standings(raw_data)
+            
+            # 3. LOAD
+            if df is not None:
+                save_data(df, code, today)
+                print(f"Sucesso: {name} salvo.")
+                
         except Exception as e:
-            print(f"Falha ao processar {name}: {e}")
+            print(f"Erro no pipeline para {name}: {e}")
 
 if __name__ == "__main__":
     run_pipeline()
