@@ -1,35 +1,32 @@
-# Global Football Analytics Pipeline
+# Global Football Analytics Pipeline ⚽
 
-A professional-grade, automated data pipeline and dashboard designed to extract, transform, and analyze football data from multiple major competitions. This project leverages Python, pandas, Streamlit, and GitHub Actions for automated, scalable data workflows.
+[![Python Tests](https://github.com/freddantes/premier-league-analytics/actions/workflows/tests.yml/badge.svg)](https://github.com/freddantes/premier-league-analytics/actions/workflows/tests.yml)
 
-## 🚀 Project Overview
-This project performs automated daily data collection from the [Football-Data API](https://www.football-data.org/). It transforms raw, nested API responses into cleaned, analytical-ready structures (Parquet format), which are then visualized through an interactive Streamlit dashboard.
+A professional-grade, automated data pipeline and dashboard designed to extract, transform, and analyze football data from multiple global competitions. Built with a focus on modularity, data quality, and scalability.
+
+## 🏗️ Architecture & Engineering
+This project follows a professional **ETL (Extract, Transform, Load)** pattern:
+*   **Extract (`src/extract.py`):** Handles API communication and raw data retrieval.
+*   **Transform (`src/transform.py`):** Encapsulates business logic, data normalization, and KPI calculations. Logic is validated via unit tests.
+*   **Load (`src/load.py`):** Manages data persistence using versioned Parquet files.
+*   **CI/CD Pipeline:** Automated testing via GitHub Actions ensures data integrity.
+
+## 🚀 Key Features
+*   **Automated Pipeline:** Daily data ingestion via GitHub Actions.
+*   **Data Quality:** Fully tested transformation logic using `pytest`.
+*   **Advanced Analytics:** Volatility analysis (delta position) and historical trend visualization.
+*   **Interactive Dashboard:** Built with `streamlit`.
 
 ## 🛠️ Tech Stack
-- **Language:** Python 3.x
-- **Data Manipulation:** pandas
-- **Dashboard:** Streamlit
-- **Automation:** GitHub Actions
-- **Data Format:** Apache Parquet
-- **Deployment:** Streamlit Cloud
+- **Language:** Python 3.12+
+- **Data Engineering:** `pandas`, `pyarrow`
+- **Dashboard:** `streamlit`, `plotly`
+- **Automation/Testing:** `pytest`, GitHub Actions
 
-## ⚙️ How it Works
-1. **Extraction:** Automated daily collection of standings for various global leagues (Premier League, Champions League, Brasileirão, etc.).
-2. **Transformation:** Normalizes nested JSON data into a flat, tabular structure for better analysis.
-3. **Resilience:** The dashboard features an API-fallback mechanism, ensuring data accessibility even if local Parquet files are unavailable.
-4. **Orchestration:** GitHub Actions triggers the process automatically.
-
-## 📋 Getting Started
-To run this project locally:
-
-1. Clone the repository: `git clone https://github.com/freddantes/premier-league-analytics.git`
-2. Install dependencies: `pip install -r requirements.txt`
-3. Set your `API_KEY` in a `.env` file (base_url: `https://api.football-data.org/v4`).
-4. Run the pipeline: `python -m src.main`
-5. Launch the dashboard: `streamlit run app.py`
-
-## 📊 Supported Competitions
-The platform currently supports: Premier League, FIFA World Cup, Champions League, Club World Cup, Copa Libertadores, Brasileirão Série A, La Liga, Ligue 1, Serie A Italiana, and Bundesliga.
-
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome!
+## 📋 Local Setup
+1. **Clone the repository:** `git clone https://github.com/freddantes/premier-league-analytics.git`
+2. **Install dependencies:** `pip install -r requirements.txt`
+3. **Configure Environment:** Create a `.env` file with your `API_KEY`.
+4. **Run Pipeline:** `python -m src.main`
+5. **Launch Dashboard:** `streamlit run app.py`
+6. **Run Tests:** `python -m pytest`

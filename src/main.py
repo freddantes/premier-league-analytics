@@ -3,11 +3,13 @@ from datetime import datetime
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Importando suas funções dos outros arquivos
-from src.extract import get_league_data # Ajuste o import conforme a estrutura da sua pasta
+# Importação dos módulos do pipeline e da configuração de log
+from src.extract import get_league_data
 from src.transform import process_standings
-from src.load import save_data # (Você pode criar este arquivo baseado na lógica de salvamento)
+from src.load import save_data
+from src.logging_config import logger
 
+# Carrega as variáveis de ambiente
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / '.env')
 
 LEAGUES = {
@@ -27,8 +29,14 @@ def run_pipeline():
     api_key = os.getenv("API_KEY")
     today = datetime.now().strftime("%Y-%m-%d")
     
+    logger.info("Iniciando execução do pipeline de dados.")
+    
+    if not api_key:
+        logger.error("API_KEY não encontrada nas variáveis de ambiente.")
+        return
+
     for name, code in LEAGUES.items():
-        print(f"--- Processando: {name} ---")
+        logger.info(f"Processando liga: {name} ({code})")
         try:
             # 1. EXTRACT
             raw_data = get_league_data(code, api_key)
@@ -39,10 +47,14 @@ def run_pipeline():
             # 3. LOAD
             if df is not None:
                 save_data(df, code, today)
-                print(f"Sucesso: {name} salvo.")
+                logger.info(f"Sucesso: Dados de {name} salvos com sucesso.")
+            else:
+                logger.warning(f"Aviso: Nenhuma tabela encontrada para {name}.")
                 
         except Exception as e:
-            print(f"Erro no pipeline para {name}: {e}")
+            logger.error(f"Falha crítica ao processar {name}: {e}")
+
+    logger.info("Pipeline finalizado.")
 
 if __name__ == "__main__":
     run_pipeline()
