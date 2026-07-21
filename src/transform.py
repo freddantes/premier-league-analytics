@@ -1,28 +1,35 @@
 import pandas as pd
+from src.schemas import StandingRowSchema
+from src.logging_config import logger
 
-def process_standings(data):
-    """Processa o JSON bruto da API e calcula as métricas (Gold)."""
-    # Verifica se há dados de classificação
-    if 'standings' not in data or not data['standings']:
-        return None
+def process_standings(raw_data: dict) -> pd.DataFrame:
+    try:
+        # Lógica atual de extração do JSON da API para extrair a tabela
+        standings_list = raw_data['standings'][0]['table']
         
-    all_groups = []
-    for stage in data['standings']:
-        if 'table' in stage:
-            all_groups.append(pd.DataFrame(stage['table']))
-    
-    if not all_groups: 
-        return None
-    
-    df = pd.concat(all_groups, ignore_index=True)
-    
-    # Flattening do dicionário de times
-    if 'team' in df.columns:
-        df_team = pd.json_normalize(df['team']).add_prefix('team_')
-        df = pd.concat([df.drop(columns=['team']), df_team], axis=1)
-    
-    # Cálculos de Analytics (KPIs)
-    df['goals_per_game'] = (df['goalsFor'] / df['playedGames']).fillna(0).round(2)
-    df['points_pct'] = (df['points'] / (df['playedGames'] * 3)).fillna(0).round(2)
-    
-    return df
+        processed_data = []
+        for row in standings_list:
+            item = {
+                "position": row.get("position"),
+                "team": row.get("team", {}).get("name"),
+                "points": row.get("points"),
+                "playedGames": row.get("playedGames"),
+                "won": row.get("won"),
+                "draw": row.get("draw"),
+                "lost": row.get("lost"),
+                "goalsFor": row.get("goalsFor"),
+                "goalsAgainst": row.get("goalsAgainst"),
+                "goalDifference": row.get("goalDifference")
+            }
+            
+            # Validação via Pydantic por linha (Contrato de Dados)
+            validated_row = StandingRowSchema(**item)
+            processed_data.append(validated_row.model_dump())
+            
+        df = pd.DataFrame(processed_data)
+        logger.info("Contrato de dados validado com sucesso para a tabela.")
+        return df
+
+    except Exception as e:
+        logger.error(f"Falha na validação do contrato de dados: {e}")
+        raise e
